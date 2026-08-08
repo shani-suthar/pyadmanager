@@ -1,0 +1,26 @@
+name: Feature or resource request
+description: Request a new GAM resource client, write support, or other enhancement
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: What kind of request is this?
+      options:
+        - New read-only resource (list_*/get_*)
+        - Write support (create/update/delete) for an existing resource
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What do you need, and why?
+      description: Which GAM REST resource/operation, and the use case it unblocks for you.
+    validations:
+      required: true
+  - type: input
+    id: api-ref
+    attributes:
+      label: Relevant Ad Manager API reference link
+      placeholder: https://developers.google.com/ad-manager/api/beta/reference/rest/...

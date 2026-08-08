@@ -1,0 +1,38 @@
+name: Bug report
+description: Something in pyadmanager isn't working as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: The smallest code snippet that triggers it (client setup + the call that fails).
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error output / traceback
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: pyadmanager version
+      placeholder: e.g. 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: e.g. 3.13.2
+    validations:
+      required: true
