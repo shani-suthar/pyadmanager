@@ -1,0 +1,63 @@
+[project]
+name = "pyadmanager"
+version = "0.1.0"
+description = "A simple, modern Python REST API client for Google Ad Manager."
+readme = "README.md"
+authors = [
+    { name = "shani-suthar", email = "shani.suthar98@gmail.com" }
+]
+requires-python = ">=3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = ["google-ad-manager", "gam", "admanager", "rest-api", "adtech"]
+dependencies = [
+    "google-auth[requests]>=2.56.3",
+    "requests>=2.34.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/shani-suthar/pyadmanager"
+Repository = "https://github.com/shani-suthar/pyadmanager"
+Issues = "https://github.com/shani-suthar/pyadmanager/issues"
+
+[build-system]
+requires = ["uv_build>=0.12.2,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+force-exclude = true
+
+[tool.ruff.lint]
+extend-select = ["I", "E"]
+
+[tool.pyright]
+exclude = [".venv","**/node_modules","**/__pycache__","**/.*"]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=pyadmanager --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/pyadmanager"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[dependency-groups]
+dev = [
+    "pyright==1.1.411",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff==0.16.2",
+]
