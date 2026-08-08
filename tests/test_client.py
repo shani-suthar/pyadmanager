@@ -4,7 +4,20 @@ from unittest.mock import Mock
 from google.oauth2 import service_account
 
 from pyadmanager.client import FULL_SCOPE, READONLY_SCOPE, GAMClient
-from pyadmanager.services import CustomTargetingClient, LineItemClient, ReportClient
+from pyadmanager.services import (
+    AdUnitClient,
+    CustomTargetingClient,
+    LineItemClient,
+    NetworkClient,
+    OrderClient,
+    PlacementClient,
+    PrivateAuctionClient,
+    PrivateAuctionDealClient,
+    ProgrammaticBuyerClient,
+    ReportClient,
+    RoleClient,
+    UserClient,
+)
 
 
 def fake_credentials() -> Mock:
@@ -131,3 +144,129 @@ class TestResourceClients:
         client = GAMClient(network_code=123, auth=fake_credentials())
 
         assert client.report is client.report
+
+    def test_network_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        network = client.network
+
+        assert isinstance(network, NetworkClient)
+        assert network.network_code == "123"
+        assert network.http_client is client.http_client
+
+    def test_network_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.network is client.network
+
+    def test_role_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        role = client.role
+
+        assert isinstance(role, RoleClient)
+        assert role.network_code == "123"
+        assert role.http_client is client.http_client
+
+    def test_role_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.role is client.role
+
+    def test_user_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        user = client.user
+
+        assert isinstance(user, UserClient)
+        assert user.network_code == "123"
+        assert user.http_client is client.http_client
+
+    def test_user_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.user is client.user
+
+    def test_placement_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        placement = client.placement
+
+        assert isinstance(placement, PlacementClient)
+        assert placement.network_code == "123"
+        assert placement.http_client is client.http_client
+
+    def test_placement_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.placement is client.placement
+
+    def test_order_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        order = client.order
+
+        assert isinstance(order, OrderClient)
+        assert order.network_code == "123"
+        assert order.http_client is client.http_client
+
+    def test_order_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.order is client.order
+
+    def test_ad_unit_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        ad_unit = client.ad_unit
+
+        assert isinstance(ad_unit, AdUnitClient)
+        assert ad_unit.network_code == "123"
+        assert ad_unit.http_client is client.http_client
+
+    def test_ad_unit_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.ad_unit is client.ad_unit
+
+    def test_private_auction_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        private_auction = client.private_auction
+
+        assert isinstance(private_auction, PrivateAuctionClient)
+        assert private_auction.network_code == "123"
+        assert private_auction.http_client is client.http_client
+
+    def test_private_auction_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.private_auction is client.private_auction
+
+    def test_private_auction_deal_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        private_auction_deal = client.private_auction_deal
+
+        assert isinstance(private_auction_deal, PrivateAuctionDealClient)
+        assert private_auction_deal.network_code == "123"
+        assert private_auction_deal.http_client is client.http_client
+
+    def test_private_auction_deal_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.private_auction_deal is client.private_auction_deal
+
+    def test_programmatic_buyer_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        programmatic_buyer = client.programmatic_buyer
+
+        assert isinstance(programmatic_buyer, ProgrammaticBuyerClient)
+        assert programmatic_buyer.network_code == "123"
+        assert programmatic_buyer.http_client is client.http_client
+
+    def test_programmatic_buyer_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.programmatic_buyer is client.programmatic_buyer

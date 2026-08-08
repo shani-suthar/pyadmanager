@@ -12,7 +12,20 @@ from functools import cached_property
 from google.oauth2 import service_account
 
 from .http_client import HTTPClient
-from .services import CustomTargetingClient, LineItemClient, ReportClient
+from .services import (
+    AdUnitClient,
+    CustomTargetingClient,
+    LineItemClient,
+    NetworkClient,
+    OrderClient,
+    PlacementClient,
+    PrivateAuctionClient,
+    PrivateAuctionDealClient,
+    ProgrammaticBuyerClient,
+    ReportClient,
+    RoleClient,
+    UserClient,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,3 +118,48 @@ class GAMClient:
     def report(self) -> ReportClient:
         """`ReportClient` for this network, built once and cached."""
         return ReportClient(self.network_code, self.http_client)
+
+    @cached_property
+    def network(self) -> NetworkClient:
+        """`NetworkClient` for this network, built once and cached."""
+        return NetworkClient(self.network_code, self.http_client)
+
+    @cached_property
+    def role(self) -> RoleClient:
+        """`RoleClient` for this network, built once and cached."""
+        return RoleClient(self.network_code, self.http_client)
+
+    @cached_property
+    def user(self) -> UserClient:
+        """`UserClient` for this network, built once and cached."""
+        return UserClient(self.network_code, self.http_client)
+
+    @cached_property
+    def placement(self) -> PlacementClient:
+        """`PlacementClient` for this network, built once and cached."""
+        return PlacementClient(self.network_code, self.http_client)
+
+    @cached_property
+    def order(self) -> OrderClient:
+        """`OrderClient` for this network, built once and cached."""
+        return OrderClient(self.network_code, self.http_client)
+
+    @cached_property
+    def ad_unit(self) -> AdUnitClient:
+        """`AdUnitClient` for this network, built once and cached."""
+        return AdUnitClient(self.network_code, self.http_client)
+
+    @cached_property
+    def private_auction(self) -> PrivateAuctionClient:
+        """`PrivateAuctionClient` for this network, built once and cached."""
+        return PrivateAuctionClient(self.network_code, self.http_client)
+
+    @cached_property
+    def private_auction_deal(self) -> PrivateAuctionDealClient:
+        """`PrivateAuctionDealClient` for this network, built once and cached."""
+        return PrivateAuctionDealClient(self.network_code, self.http_client)
+
+    @cached_property
+    def programmatic_buyer(self) -> ProgrammaticBuyerClient:
+        """`ProgrammaticBuyerClient` for this network, built once and cached."""
+        return ProgrammaticBuyerClient(self.network_code, self.http_client)
