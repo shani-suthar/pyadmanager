@@ -2,10 +2,10 @@
 
 **A simple, modern Python REST client for the Google Ad Manager API.**
 
-[![PyPI version](https://img.shields.io/pypi/v/pyadmanager.svg)](https://pypi.org/project/pyadmanager/)
-[![Python versions](https://img.shields.io/pypi/pyversions/pyadmanager.svg)](https://pypi.org/project/pyadmanager/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Build status](https://img.shields.io/badge/build-unknown-lightgrey.svg)](#)
+[![PyPI version](https://img.shields.io/pypi/v/pyadmanager.svg?cachebust=1)](https://pypi.org/project/pyadmanager/)
+[![Python versions](https://img.shields.io/pypi/pyversions/pyadmanager.svg?cachebust=1)](https://pypi.org/project/pyadmanager/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/shani-suthar/pyadmanager/blob/main/LICENSE)
+[![Build status](https://github.com/shani-suthar/pyadmanager/actions/workflows/code-quality.yaml/badge.svg)](https://github.com/shani-suthar/pyadmanager/actions/workflows/code-quality.yaml)
 
 ## Overview / Why pyadmanager?
 
@@ -175,4 +175,4 @@ Please open an issue before starting on a larger change, especially write suppor
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](https://github.com/shani-suthar/pyadmanager/blob/main/LICENSE) for details.
