@@ -6,48 +6,9 @@ Reference:
 
 from datetime import datetime
 
-from ..filters import BaseRestFilter, GAMRestFilters
+from ..filters import GAMRestFilters, get_filter_string
 from ..http_client import HTTPClient
 from ..utils import gam_obj_id_path, gam_obj_path
-
-
-class PrivateAuctionFilter(BaseRestFilter):
-    """Filter for `PrivateAuctionClient.list_private_auctions`.
-
-    One field per `privateAuctions` REST filter field.
-    """
-
-    def __init__(
-        self,
-        name: str | list[str] | None = None,
-        display_name: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
-        description: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
-        archived: bool | None = None,
-        create_time: datetime | GAMRestFilters.Datetime_Filter_Type | None = None,
-        update_time: datetime | GAMRestFilters.Datetime_Filter_Type | None = None,
-    ):
-        """Store filter field values; `name` is expected to already be a full resource path.
-
-        `PrivateAuctionClient.list_private_auctions` resolves a bare
-        `private_auction_id` to `name` via `utils.gam_obj_id_path` before
-        constructing this filter.
-        """
-        self.name = name
-        self.display_name = display_name
-        self.description = description
-        self.archived = archived
-        self.create_time = create_time
-        self.update_time = update_time
-
-    def _build_filter_list(self) -> list[str]:
-        return [
-            GAMRestFilters.id_based_filter("name", self.name),
-            GAMRestFilters.text_filter("displayName", self.display_name),
-            GAMRestFilters.text_filter("description", self.description),
-            GAMRestFilters.boolean_filter("archived", self.archived),
-            GAMRestFilters.date_filter("createTime", self.create_time),
-            GAMRestFilters.date_filter("updateTime", self.update_time),
-        ]
 
 
 class PrivateAuctionClient:
@@ -89,14 +50,16 @@ class PrivateAuctionClient:
             private_auction_id, self.network_code, self._gam_obj_type
         )
 
-        filter_str = PrivateAuctionFilter(
-            name=private_auction_id_str,
-            display_name=display_name,
-            description=description,
-            archived=archived,
-            create_time=create_time,
-            update_time=update_time,
-        ).get_filter_string()
+        filter_list = [
+            GAMRestFilters.id_based_filter("name", private_auction_id_str),
+            GAMRestFilters.text_filter("displayName", display_name),
+            GAMRestFilters.text_filter("description", description),
+            GAMRestFilters.boolean_filter("archived", archived),
+            GAMRestFilters.date_filter("createTime", create_time),
+            GAMRestFilters.date_filter("updateTime", update_time),
+        ]
+
+        filter_str = get_filter_string(filter_list)
 
         params = {"pageSize": page_size, "filter": filter_str}
 

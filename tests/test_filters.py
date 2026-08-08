@@ -1,8 +1,6 @@
 from datetime import UTC, datetime
 
-import pytest
-
-from pyadmanager.filters import BaseRestFilter, GAMRestFilters
+from pyadmanager.filters import GAMRestFilters, get_filter_string
 
 
 class TestTextFilter:
@@ -115,21 +113,11 @@ class TestDateFilter:
         assert GAMRestFilters.date_filter("updateTime", None) == ""
 
 
-class TestBaseRestFilter:
+class TestGetFilterString:
     def test_joins_non_empty_clauses_with_and(self):
-        class FakeFilter(BaseRestFilter):
-            def _build_filter_list(self):
-                return ['status = "ACTIVE"', "", 'name = "foo"']
+        clauses = ['status = "ACTIVE"', "", 'name = "foo"']
 
-        assert FakeFilter().get_filter_string() == 'status = "ACTIVE" AND name = "foo"'
+        assert get_filter_string(clauses) == 'status = "ACTIVE" AND name = "foo"'
 
     def test_all_empty_clauses_returns_none(self):
-        class FakeFilter(BaseRestFilter):
-            def _build_filter_list(self):
-                return ["", ""]
-
-        assert FakeFilter().get_filter_string() is None
-
-    def test_build_filter_list_is_abstract(self):
-        with pytest.raises(NotImplementedError):
-            BaseRestFilter()._build_filter_list()
+        assert get_filter_string(["", ""]) is None

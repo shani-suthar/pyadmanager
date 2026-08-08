@@ -44,9 +44,16 @@ On every commit, `prek` runs (see `.pre-commit-config.yaml`):
 - `ruff-check --fix` — lint, autofixing what it can
 - `ruff-format` — format
 - `pyright` — type check
+- `pytest` — runs the full test suite (`uv run pytest`)
 
-These run in hooks' own isolated environments, so they work the same regardless of what's installed in your project's `.venv`.
+The first four run in hooks' own isolated environments, so they work the same regardless of what's installed in your project's `.venv`. `pytest` is a local hook (`language: system`), so it runs against your `.venv` — make sure `just setup`/`uv sync` has been run.
+
+## Optional dependencies
+
+`polars` is an optional extra used by `services/report.py` to parse report rows into a DataFrame. It's not installed by default — `uv sync --extra polars` if you need it, or if you want `test_report.py`'s dataframe-building tests to run instead of skip (they use `pytest.importorskip("polars")`).
 
 ## Tests
 
-`tests/` unit-tests everything without touching the live Ad Manager API — `filters.py`, `retry.py`, and `http_client.py` are pure/network-free, and `client.py`/`services/*.py` are tested by mocking `HTTPClient`/`authed_session`/`service_account.Credentials`. If you add a new `services/<resource>.py`, follow the same approach: mock rather than calling the real API.
+`tests/` unit-tests everything without touching the live Ad Manager API — `filters.py`, `retry.py`, and `http_client.py` are pure/network-free, and `client.py`/`services/*.py` are tested by mocking `HTTPClient`/`authed_session`/`service_account.Credentials`. `tests/conftest.py` provides a shared `fake_http_client` fixture (`Mock(spec=HTTPClient)`) used across the `services/*` test files — use it rather than constructing your own mock. If you add a new `services/<resource>.py`, follow the same approach: mock rather than calling the real API.
+
+`live_test.py` at the repo root is a separate, manual smoke test against a real GAM network (requires your own `creds.json`) — it's not run by `just test` or CI, only by you directly (`uv run python live_test.py`) when you want to sanity-check against live data.

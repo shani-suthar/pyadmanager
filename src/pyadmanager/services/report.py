@@ -8,7 +8,7 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-from ..filters import BaseRestFilter, GAMRestFilters
+from ..filters import GAMRestFilters, get_filter_string
 from ..http_client import HTTPClient
 from ..utils import gam_obj_id_path, gam_obj_path
 
@@ -18,29 +18,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DEFAULT_SLEEP_TIME = 2.5
-
-
-class ReportFilter(BaseRestFilter):
-    """Filter for `ReportClient.list_reports` — one field per `reports` REST filter field."""
-
-    def __init__(
-        self,
-        name: str | list[str] | None = None,
-        display_name: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
-    ):
-        """Store filter field values; `name` is expected to already be a full resource path.
-
-        `ReportClient.list_reports` resolves a bare `report_id` to `name`
-        via `utils.gam_obj_id_path` before constructing this filter.
-        """
-        self.name = name
-        self.display_name = display_name
-
-    def _build_filter_list(self) -> list[str]:
-        return [
-            GAMRestFilters.id_based_filter("name", self.name),
-            GAMRestFilters.text_filter("displayName", self.display_name),
-        ]
 
 
 def _unwrap_value(value: dict[str, str | float]) -> str | int | float | None:
@@ -237,10 +214,12 @@ class ReportClient:
 
         report_id_str = gam_obj_id_path(report_id, self.network_code, self._gam_obj_type)
 
-        filter_str = ReportFilter(
-            name=report_id_str,
-            display_name=display_name,
-        ).get_filter_string()
+        filter_list = [
+            GAMRestFilters.id_based_filter("name", report_id_str),
+            GAMRestFilters.text_filter("displayName", display_name),
+        ]
+
+        filter_str = get_filter_string(filter_list)
 
         params = {"pageSize": page_size, "filter": filter_str}
 

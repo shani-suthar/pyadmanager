@@ -6,7 +6,6 @@ import pytest
 from pyadmanager.services import report
 from pyadmanager.services.report import (
     ReportClient,
-    ReportFilter,
     ReportJob,
     _unwrap_value,
     parse_report_rows,
@@ -24,21 +23,6 @@ def make_job_metadata(
     report_path: str = "networks/123/reports/5",
 ) -> dict:
     return {"name": job_path, "metadata": {"report": report_path}}
-
-
-class TestReportFilter:
-    def test_name_uses_id_based_filter(self):
-        filter_str = ReportFilter(name="networks/123/reports/456").get_filter_string()
-
-        assert filter_str == 'name = "networks/123/reports/456"'
-
-    def test_display_name_is_quoted(self):
-        filter_str = ReportFilter(display_name="test_report_123").get_filter_string()
-
-        assert filter_str == 'displayName = "test_report_123"'
-
-    def test_no_fields_returns_none(self):
-        assert ReportFilter().get_filter_string() is None
 
 
 class TestUnwrapValue:
@@ -283,6 +267,28 @@ class TestListReports:
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/reports/456"'
+
+    def test_report_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        http_client = fake_http_client
+        client = ReportClient(NETWORK_CODE, http_client)
+
+        client.list_reports(report_id=[1, 2])
+
+        _, _, params = http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            '(name = "networks/123/reports/1" OR name = "networks/123/reports/2")'
+        )
+
+    def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
+        http_client = fake_http_client
+        client = ReportClient(NETWORK_CODE, http_client)
+
+        client.list_reports(report_id=456, display_name="test_report_123")
+
+        _, _, params = http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'name = "networks/123/reports/456" AND displayName = "test_report_123"'
+        )
 
     def test_no_filters_passes_none(self, fake_http_client):
         http_client = fake_http_client

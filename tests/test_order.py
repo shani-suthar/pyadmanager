@@ -1,67 +1,8 @@
 from datetime import UTC, datetime
 
-from pyadmanager.services.order import OrderClient, OrderFilter
+from pyadmanager.services.order import OrderClient
 
 NETWORK_CODE = "123"
-
-
-class TestOrderFilter:
-    def test_name_uses_id_based_filter(self):
-        filter_str = OrderFilter(name="networks/123/orders/456").get_filter_string()
-
-        assert filter_str == 'name = "networks/123/orders/456"'
-
-    def test_advertiser_and_agency_use_id_based_filter(self):
-        filter_str = OrderFilter(
-            advertiser="networks/123/companies/1",
-            agency="networks/123/companies/2",
-        ).get_filter_string()
-
-        assert filter_str == (
-            'advertiser = "networks/123/companies/1" AND agency = "networks/123/companies/2"'
-        )
-
-    def test_trafficker_and_salesperson_use_id_based_filter(self):
-        filter_str = OrderFilter(
-            trafficker="networks/123/users/1",
-            salesperson="networks/123/users/2",
-        ).get_filter_string()
-
-        assert filter_str == (
-            'trafficker = "networks/123/users/1" AND salesperson = "networks/123/users/2"'
-        )
-
-    def test_display_name_and_currency_code_are_quoted(self):
-        filter_str = OrderFilter(
-            display_name="Q1 Campaign", currency_code="USD"
-        ).get_filter_string()
-
-        assert filter_str == 'displayName = "Q1 Campaign" AND currencyCode = "USD"'
-
-    def test_start_time_is_quoted_rfc3339(self):
-        filter_str = OrderFilter(
-            start_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ")
-        ).get_filter_string()
-
-        assert filter_str == 'startTime >= "2025-01-01T00:00:00+00:00"'
-
-    def test_status_is_quoted(self):
-        filter_str = OrderFilter(status="APPROVED").get_filter_string()
-
-        assert filter_str == 'status = "APPROVED"'
-
-    def test_programmatic_and_archived_are_bare_booleans(self):
-        filter_str = OrderFilter(programmatic=True, archived=False).get_filter_string()
-
-        assert filter_str == "programmatic = true AND archived = false"
-
-    def test_external_order_id_and_po_number_are_quoted(self):
-        filter_str = OrderFilter(external_order_id="ext-1", po_number="PO-1").get_filter_string()
-
-        assert filter_str == 'externalOrderId = "ext-1" AND poNumber = "PO-1"'
-
-    def test_no_fields_returns_none(self):
-        assert OrderFilter().get_filter_string() is None
 
 
 class TestListOrders:
@@ -118,6 +59,109 @@ class TestListOrders:
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'salesperson = "networks/123/users/9"'
+
+    def test_display_name_and_currency_code_are_quoted(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(display_name="Q1 Campaign", currency_code="USD")
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'displayName = "Q1 Campaign" AND currencyCode = "USD"'
+
+    def test_start_time_is_quoted_rfc3339(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(start_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'startTime >= "2025-01-01T00:00:00+00:00"'
+
+    def test_programmatic_and_archived_are_bare_booleans(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(programmatic=True, archived=False)
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == "programmatic = true AND archived = false"
+
+    def test_external_order_id_and_po_number_are_quoted(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(external_order_id="ext-1", po_number="PO-1")
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'externalOrderId = "ext-1" AND poNumber = "PO-1"'
+
+    def test_order_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(order_id=[1, 2])
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            '(name = "networks/123/orders/1" OR name = "networks/123/orders/2")'
+        )
+
+    def test_advertiser_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(advertiser_id=[1, 2])
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            '(advertiser = "networks/123/companies/1" OR advertiser = "networks/123/companies/2")'
+        )
+
+    def test_trafficker_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(trafficker_id=[1, 2])
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            '(trafficker = "networks/123/users/1" OR trafficker = "networks/123/users/2")'
+        )
+
+    def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(
+            order_id=456,
+            display_name="Q1 Campaign",
+            advertiser_id=1,
+            agency_id=2,
+            trafficker_id=3,
+            salesperson_id=4,
+            currency_code="USD",
+            start_time=datetime(2025, 1, 1, tzinfo=UTC),
+            end_time=datetime(2025, 2, 1, tzinfo=UTC),
+            status="APPROVED",
+            programmatic=True,
+            archived=False,
+            external_order_id="ext-1",
+            po_number="PO-1",
+        )
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'name = "networks/123/orders/456" AND displayName = "Q1 Campaign" '
+            'AND advertiser = "networks/123/companies/1" AND agency = "networks/123/companies/2" '
+            'AND trafficker = "networks/123/users/3" AND salesperson = "networks/123/users/4" '
+            'AND currencyCode = "USD" AND startTime = "2025-01-01T00:00:00+00:00" '
+            'AND endTime = "2025-02-01T00:00:00+00:00" AND status = "APPROVED" '
+            'AND programmatic = true AND archived = false AND externalOrderId = "ext-1" '
+            'AND poNumber = "PO-1"'
+        )
+
+    def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
+        client = OrderClient(NETWORK_CODE, fake_http_client)
+
+        client.list_orders(trafficker_id=9, status="APPROVED", archived=False)
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'trafficker = "networks/123/users/9" AND status = "APPROVED" AND archived = false'
+        )
 
     def test_no_filters_passes_none(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)

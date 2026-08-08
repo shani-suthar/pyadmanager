@@ -1,40 +1,8 @@
 from datetime import UTC, datetime
 
-from pyadmanager.services.placement import PlacementClient, PlacementFilter
+from pyadmanager.services.placement import PlacementClient
 
 NETWORK_CODE = "123"
-
-
-class TestPlacementFilter:
-    def test_name_uses_id_based_filter(self):
-        filter_str = PlacementFilter(name="networks/123/placements/456").get_filter_string()
-
-        assert filter_str == 'name = "networks/123/placements/456"'
-
-    def test_display_name_is_quoted(self):
-        filter_str = PlacementFilter(display_name="Homepage").get_filter_string()
-
-        assert filter_str == 'displayName = "Homepage"'
-
-    def test_placement_code_is_quoted(self):
-        filter_str = PlacementFilter(placement_code="ABC123").get_filter_string()
-
-        assert filter_str == 'placementCode = "ABC123"'
-
-    def test_status_is_quoted(self):
-        filter_str = PlacementFilter(status="ACTIVE").get_filter_string()
-
-        assert filter_str == 'status = "ACTIVE"'
-
-    def test_update_time_is_quoted_rfc3339(self):
-        filter_str = PlacementFilter(
-            update_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ")
-        ).get_filter_string()
-
-        assert filter_str == 'updateTime >= "2025-01-01T00:00:00+00:00"'
-
-    def test_no_fields_returns_none(self):
-        assert PlacementFilter().get_filter_string() is None
 
 
 class TestListPlacements:
@@ -69,6 +37,49 @@ class TestListPlacements:
         assert params["filter"] == (
             '(name = "networks/123/placements/1" OR name = "networks/123/placements/2")'
         )
+
+    def test_placement_code_is_quoted(self, fake_http_client):
+        client = PlacementClient(NETWORK_CODE, fake_http_client)
+
+        client.list_placements(placement_code="ABC123")
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'placementCode = "ABC123"'
+
+    def test_update_time_is_quoted_rfc3339(self, fake_http_client):
+        client = PlacementClient(NETWORK_CODE, fake_http_client)
+
+        client.list_placements(update_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'updateTime >= "2025-01-01T00:00:00+00:00"'
+
+    def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
+        client = PlacementClient(NETWORK_CODE, fake_http_client)
+
+        client.list_placements(
+            placement_id=456,
+            display_name="Homepage",
+            description="Main page placement",
+            placement_code="ABC123",
+            status="ACTIVE",
+            update_time=datetime(2025, 1, 1, tzinfo=UTC),
+        )
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'name = "networks/123/placements/456" AND displayName = "Homepage" '
+            'AND description = "Main page placement" AND placementCode = "ABC123" '
+            'AND status = "ACTIVE" AND updateTime = "2025-01-01T00:00:00+00:00"'
+        )
+
+    def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
+        client = PlacementClient(NETWORK_CODE, fake_http_client)
+
+        client.list_placements(description="Main page placement", status="ACTIVE")
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == ('description = "Main page placement" AND status = "ACTIVE"')
 
     def test_no_filters_passes_none(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)

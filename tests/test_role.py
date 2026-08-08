@@ -1,31 +1,6 @@
-from pyadmanager.services.role import RoleClient, RoleFilter
+from pyadmanager.services.role import RoleClient
 
 NETWORK_CODE = "123"
-
-
-class TestRoleFilter:
-    def test_name_uses_id_based_filter(self):
-        filter_str = RoleFilter(name="networks/123/roles/456").get_filter_string()
-
-        assert filter_str == 'name = "networks/123/roles/456"'
-
-    def test_display_name_is_quoted(self):
-        filter_str = RoleFilter(display_name="Admin").get_filter_string()
-
-        assert filter_str == 'displayName = "Admin"'
-
-    def test_status_is_quoted(self):
-        filter_str = RoleFilter(status="ACTIVE").get_filter_string()
-
-        assert filter_str == 'status = "ACTIVE"'
-
-    def test_built_in_is_bare_boolean(self):
-        filter_str = RoleFilter(built_in=True).get_filter_string()
-
-        assert filter_str == "builtIn = true"
-
-    def test_no_fields_returns_none(self):
-        assert RoleFilter().get_filter_string() is None
 
 
 class TestListRoles:
@@ -60,6 +35,33 @@ class TestListRoles:
         assert (
             params["filter"] == '(name = "networks/123/roles/1" OR name = "networks/123/roles/2")'
         )
+
+    def test_built_in_is_bare_boolean(self, fake_http_client):
+        client = RoleClient(NETWORK_CODE, fake_http_client)
+
+        client.list_roles(built_in=True)
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == "builtIn = true"
+
+    def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
+        client = RoleClient(NETWORK_CODE, fake_http_client)
+
+        client.list_roles(role_id=456, display_name="Admin", status="ACTIVE", built_in=True)
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'name = "networks/123/roles/456" AND displayName = "Admin" '
+            'AND status = "ACTIVE" AND builtIn = true'
+        )
+
+    def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
+        client = RoleClient(NETWORK_CODE, fake_http_client)
+
+        client.list_roles(display_name="Admin", built_in=True)
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'displayName = "Admin" AND builtIn = true'
 
     def test_no_filters_passes_none(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)

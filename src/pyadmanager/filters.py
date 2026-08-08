@@ -57,7 +57,7 @@ class GAMRestFilters:
         (see `utils.gam_obj_id_path`), always double-quoted per the REST
         filter grammar's string-quoting rule. A `list` becomes a
         parenthesized `OR` clause; `None` means "no filter" and returns `""`
-        so `BaseRestFilter.get_filter_string` can drop it.
+        so `get_filter_string` can drop it.
         """
         if value is None:
             return ""
@@ -68,6 +68,8 @@ class GAMRestFilters:
         if isinstance(value, list):
             vals = " OR ".join([f'{field} = "{v}"' for v in value])
             return f"({vals})"
+
+        raise TypeError(f"unsupported value type for {field!r}: {type(value)!r}")
 
     @overload
     @staticmethod
@@ -105,6 +107,9 @@ class GAMRestFilters:
 
         # Handle Tuple or Single String
         val, f_type = value if isinstance(value, tuple) else (value, "EQUAL_TO")
+
+        if not isinstance(val, str):
+            raise TypeError(f"unsupported value type for {field!r}: {type(val)!r}")
 
         templates = {
             "EQUAL_TO": '{} = "{}"',
@@ -224,26 +229,14 @@ class GAMRestFilters:
         return f'{field} {ops[f_type]} "{formatted_dt}"'
 
 
-class BaseRestFilter:
-    """Engine to combine multiple filter components into a final REST query string."""
+def get_filter_string(filters: list[str]) -> str | None:
+    """Join a list of `GAMRestFilters.*_filter` clauses with `AND` into one filter string.
 
-    def _build_filter_list(self) -> list[str]:
-        """Return one clause string per field, in field order (subclasses must override).
-
-        Each element should come from a `GAMRestFilters.*_filter` call and be
-        `""` for a field that wasn't set — `get_filter_string` drops empty
-        clauses before `AND`-joining the rest.
-        """
-        raise NotImplementedError("_build_filter_list is not implemented!!")
-
-    def get_filter_string(self) -> str | None:
-        """Join `_build_filter_list()`'s non-empty clauses with `AND` into one filter string.
-
-        Returns `None` (rather than `""`) when every field was unset, so
-        callers can pass the result straight through as an optional
-        `filter` query param without an extra `if` check.
-        """
-        # Filter out empty strings from optional filters
-        clauses = [c for c in self._build_filter_list() if c]
-        filter_str = " AND ".join(clauses)
-        return filter_str if filter_str else None
+    Empty clauses (from unset fields) are dropped first. Returns `None`
+    (rather than `""`) when every field was unset, so callers can pass the
+    result straight through as an optional `filter` query param without an
+    extra `if` check.
+    """
+    clauses = [clause for clause in filters if clause]
+    filter_str = " AND ".join(clauses)
+    return filter_str if filter_str else None

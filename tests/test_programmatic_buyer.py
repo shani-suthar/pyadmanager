@@ -1,47 +1,6 @@
-from pyadmanager.services.programmatic_buyer import (
-    ProgrammaticBuyerClient,
-    ProgrammaticBuyerFilter,
-)
+from pyadmanager.services.programmatic_buyer import ProgrammaticBuyerClient
 
 NETWORK_CODE = "123"
-
-
-class TestProgrammaticBuyerFilter:
-    def test_name_uses_id_based_filter(self):
-        filter_str = ProgrammaticBuyerFilter(
-            name="networks/123/programmaticBuyers/456"
-        ).get_filter_string()
-
-        assert filter_str == 'name = "networks/123/programmaticBuyers/456"'
-
-    def test_parent_account_id_uses_id_based_filter(self):
-        filter_str = ProgrammaticBuyerFilter(
-            parent_account_id="networks/123/programmaticBuyers/1"
-        ).get_filter_string()
-
-        assert filter_str == 'parentAccountId = "networks/123/programmaticBuyers/1"'
-
-    def test_display_name_and_partner_client_id_are_quoted(self):
-        filter_str = ProgrammaticBuyerFilter(
-            display_name="Acme DSP", partner_client_id="partner-1"
-        ).get_filter_string()
-
-        assert filter_str == 'displayName = "Acme DSP" AND partnerClientId = "partner-1"'
-
-    def test_boolean_fields_are_bare(self):
-        filter_str = ProgrammaticBuyerFilter(
-            agency=True,
-            preferred_deals_enabled=False,
-            programmatic_guaranteed_enabled=True,
-        ).get_filter_string()
-
-        assert filter_str == (
-            "agency = true AND preferredDealsEnabled = false "
-            "AND programmaticGuaranteedEnabled = true"
-        )
-
-    def test_no_fields_returns_none(self):
-        assert ProgrammaticBuyerFilter().get_filter_string() is None
 
 
 class TestListProgrammaticBuyers:
@@ -74,6 +33,82 @@ class TestListProgrammaticBuyers:
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'parentAccountId = "networks/123/programmaticBuyers/1"'
+
+    def test_display_name_and_partner_client_id_are_quoted(self, fake_http_client):
+        client = ProgrammaticBuyerClient(NETWORK_CODE, fake_http_client)
+
+        client.list_programmatic_buyers(display_name="Acme DSP", partner_client_id="partner-1")
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'displayName = "Acme DSP" AND partnerClientId = "partner-1"'
+
+    def test_boolean_fields_are_bare(self, fake_http_client):
+        client = ProgrammaticBuyerClient(NETWORK_CODE, fake_http_client)
+
+        client.list_programmatic_buyers(
+            agency=True,
+            preferred_deals_enabled=False,
+            programmatic_guaranteed_enabled=True,
+        )
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            "agency = true AND preferredDealsEnabled = false "
+            "AND programmaticGuaranteedEnabled = true"
+        )
+
+    def test_buyer_account_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        client = ProgrammaticBuyerClient(NETWORK_CODE, fake_http_client)
+
+        client.list_programmatic_buyers(buyer_account_id=[1, 2])
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            '(name = "networks/123/programmaticBuyers/1" '
+            'OR name = "networks/123/programmaticBuyers/2")'
+        )
+
+    def test_parent_account_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        client = ProgrammaticBuyerClient(NETWORK_CODE, fake_http_client)
+
+        client.list_programmatic_buyers(parent_account_id=[1, 2])
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            '(parentAccountId = "networks/123/programmaticBuyers/1" '
+            'OR parentAccountId = "networks/123/programmaticBuyers/2")'
+        )
+
+    def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
+        client = ProgrammaticBuyerClient(NETWORK_CODE, fake_http_client)
+
+        client.list_programmatic_buyers(
+            buyer_account_id=456,
+            display_name="Acme DSP",
+            parent_account_id=1,
+            partner_client_id="partner-1",
+            agency=True,
+            preferred_deals_enabled=False,
+            programmatic_guaranteed_enabled=True,
+        )
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'name = "networks/123/programmaticBuyers/456" AND displayName = "Acme DSP" '
+            'AND parentAccountId = "networks/123/programmaticBuyers/1" '
+            'AND partnerClientId = "partner-1" AND agency = true '
+            "AND preferredDealsEnabled = false AND programmaticGuaranteedEnabled = true"
+        )
+
+    def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
+        client = ProgrammaticBuyerClient(NETWORK_CODE, fake_http_client)
+
+        client.list_programmatic_buyers(partner_client_id="partner-1", preferred_deals_enabled=True)
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'partnerClientId = "partner-1" AND preferredDealsEnabled = true'
+        )
 
     def test_no_filters_passes_none(self, fake_http_client):
         client = ProgrammaticBuyerClient(NETWORK_CODE, fake_http_client)

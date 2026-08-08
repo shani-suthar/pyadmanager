@@ -1,42 +1,8 @@
 from datetime import UTC, datetime
 
-from pyadmanager.services.private_auction import PrivateAuctionClient, PrivateAuctionFilter
+from pyadmanager.services.private_auction import PrivateAuctionClient
 
 NETWORK_CODE = "123"
-
-
-class TestPrivateAuctionFilter:
-    def test_name_uses_id_based_filter(self):
-        filter_str = PrivateAuctionFilter(
-            name="networks/123/privateAuctions/456"
-        ).get_filter_string()
-
-        assert filter_str == 'name = "networks/123/privateAuctions/456"'
-
-    def test_display_name_and_description_are_quoted(self):
-        filter_str = PrivateAuctionFilter(
-            display_name="Q1 Auction", description="Quarterly deal"
-        ).get_filter_string()
-
-        assert filter_str == 'displayName = "Q1 Auction" AND description = "Quarterly deal"'
-
-    def test_archived_is_bare_boolean(self):
-        filter_str = PrivateAuctionFilter(archived=True).get_filter_string()
-
-        assert filter_str == "archived = true"
-
-    def test_create_time_and_update_time_are_quoted_rfc3339(self):
-        dt = datetime(2025, 1, 1, tzinfo=UTC)
-        filter_str = PrivateAuctionFilter(
-            create_time=dt, update_time=(dt, "GT_EQ")
-        ).get_filter_string()
-
-        assert filter_str == (
-            'createTime = "2025-01-01T00:00:00+00:00" AND updateTime >= "2025-01-01T00:00:00+00:00"'
-        )
-
-    def test_no_fields_returns_none(self):
-        assert PrivateAuctionFilter().get_filter_string() is None
 
 
 class TestListPrivateAuctions:
@@ -61,6 +27,63 @@ class TestListPrivateAuctions:
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/privateAuctions/456"'
+
+    def test_display_name_and_description_are_quoted(self, fake_http_client):
+        client = PrivateAuctionClient(NETWORK_CODE, fake_http_client)
+
+        client.list_private_auctions(display_name="Q1 Auction", description="Quarterly deal")
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'displayName = "Q1 Auction" AND description = "Quarterly deal"'
+
+    def test_create_time_and_update_time_are_quoted_rfc3339(self, fake_http_client):
+        client = PrivateAuctionClient(NETWORK_CODE, fake_http_client)
+        dt = datetime(2025, 1, 1, tzinfo=UTC)
+
+        client.list_private_auctions(create_time=dt, update_time=(dt, "GT_EQ"))
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'createTime = "2025-01-01T00:00:00+00:00" AND updateTime >= "2025-01-01T00:00:00+00:00"'
+        )
+
+    def test_private_auction_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        client = PrivateAuctionClient(NETWORK_CODE, fake_http_client)
+
+        client.list_private_auctions(private_auction_id=[1, 2])
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            '(name = "networks/123/privateAuctions/1" OR name = "networks/123/privateAuctions/2")'
+        )
+
+    def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
+        client = PrivateAuctionClient(NETWORK_CODE, fake_http_client)
+
+        client.list_private_auctions(
+            private_auction_id=456,
+            display_name="Q1 Auction",
+            description="Quarterly deal",
+            archived=True,
+            create_time=datetime(2024, 12, 1, tzinfo=UTC),
+            update_time=datetime(2025, 1, 1, tzinfo=UTC),
+        )
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == (
+            'name = "networks/123/privateAuctions/456" AND displayName = "Q1 Auction" '
+            'AND description = "Quarterly deal" AND archived = true '
+            'AND createTime = "2024-12-01T00:00:00+00:00" '
+            'AND updateTime = "2025-01-01T00:00:00+00:00"'
+        )
+
+    def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
+        client = PrivateAuctionClient(NETWORK_CODE, fake_http_client)
+
+        client.list_private_auctions(description="Quarterly deal", archived=True)
+
+        _, _, params = fake_http_client.fetch_all.call_args[0]
+        assert params["filter"] == 'description = "Quarterly deal" AND archived = true'
 
     def test_no_filters_passes_none(self, fake_http_client):
         client = PrivateAuctionClient(NETWORK_CODE, fake_http_client)
