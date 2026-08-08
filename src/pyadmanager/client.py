@@ -5,32 +5,60 @@ Reference:
 
 """
 
+import logging
 from datetime import datetime
 from functools import cached_property
 
 from google.oauth2 import service_account
 
 from .http_client import HTTPClient
-from .services import CustomTargetingClient, LineItemClient
+from .services import CustomTargetingClient, LineItemClient, ReportClient
+
+logger = logging.getLogger(__name__)
 
 READONLY_SCOPE = "https://www.googleapis.com/auth/admanager.readonly"
 FULL_SCOPE = "https://www.googleapis.com/auth/admanager"
 
 
 class GAMClient:
+    """Entry point for the Google Ad Manager REST API.
+
+    Wraps an `AuthorizedSession` (via `HTTPClient`) for a single `network_code`
+    and exposes one resource client per GAM resource as a lazily-constructed,
+    cached property (`.custom_targeting`, `.line_item`, `.report`), each sharing
+    this client's `network_code` and `HTTPClient`. Prefer the
+    `from_service_account_file`/`from_service_account_info` constructors over
+    calling `__init__` directly, since they build the `Credentials` object for you.
+    """
+
     def __init__(
         self,
         network_code: str | int,
         auth: service_account.Credentials,
     ):
+        """Wrap already-constructed `Credentials` for `network_code`.
+
+        `network_code` is coerced to `str` since GAM REST paths (`networks/{code}/...`)
+        are string-formatted regardless of whether the caller has it as an `int`.
+        """
         self.network_code = str(network_code)
         self.http_client = HTTPClient(auth)
+        logger.debug("GAMClient initialized for network %s", self.network_code)
 
     @classmethod
     def from_service_account_file(
         cls, network_code: str | int, filename: str, readonly: bool = False, **kwargs
     ):
+        """Build a client from a service-account JSON key file on disk.
+
+        `readonly=True` requests `READONLY_SCOPE` instead of `FULL_SCOPE`;
+        pass an explicit `scopes=[...]` in `kwargs` to override either default.
+        Additional `kwargs` are forwarded to `Credentials.from_service_account_file`.
+        """
         kwargs.setdefault("scopes", [READONLY_SCOPE if readonly else FULL_SCOPE])
+        logger.info(
+            "loading service account credentials from %s (scopes=%s)", filename, kwargs["scopes"]
+        )
         creds = service_account.Credentials.from_service_account_file(
             filename,
             **kwargs,
@@ -41,7 +69,17 @@ class GAMClient:
     def from_service_account_info(
         cls, network_code: str | int, info: dict, readonly: bool = False, **kwargs
     ):
+        """Build a client from an already-loaded service-account key dict.
+
+        Same scope defaulting as `from_service_account_file`; use this
+        variant when the key material comes from a secrets manager rather
+        than a file on disk.
+        """
         kwargs.setdefault("scopes", [READONLY_SCOPE if readonly else FULL_SCOPE])
+        # Deliberately not logging `info` — it contains the private key.
+        logger.info(
+            "loading service account credentials from info dict (scopes=%s)", kwargs["scopes"]
+        )
         creds = service_account.Credentials.from_service_account_info(
             info,
             **kwargs,
@@ -55,8 +93,15 @@ class GAMClient:
 
     @cached_property
     def custom_targeting(self) -> CustomTargetingClient:
+        """`CustomTargetingClient` for this network, built once and cached."""
         return CustomTargetingClient(self.network_code, self.http_client)
 
     @cached_property
     def line_item(self) -> LineItemClient:
+        """`LineItemClient` for this network, built once and cached."""
         return LineItemClient(self.network_code, self.http_client)
+
+    @cached_property
+    def report(self) -> ReportClient:
+        """`ReportClient` for this network, built once and cached."""
+        return ReportClient(self.network_code, self.http_client)

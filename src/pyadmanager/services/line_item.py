@@ -46,6 +46,8 @@ LineItemEnvironmentType = Literal["BROWSER", "VIDEO_PLAYER"]
 
 
 class LineItemFilter(BaseRestFilter):
+    """Filter for `LineItemClient.list_line_items` — one field per `lineItems` REST filter field."""
+
     def __init__(
         self,
         name: str | list[str] | None = None,
@@ -68,6 +70,12 @@ class LineItemFilter(BaseRestFilter):
         update_time: datetime | GAMRestFilters.Datetime_Filter_Type | None = None,
         web_property_code: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
     ):
+        """Store filter field values; `name`/`order` are expected to already be full resource paths.
+
+        `LineItemClient.list_line_items` resolves bare `line_item_id`/
+        `order_id` ints to these paths via `utils.gam_obj_id_path` before
+        constructing this filter.
+        """
         self.name = name
         self.display_name = display_name
         self.order = order
@@ -112,7 +120,9 @@ class LineItemFilter(BaseRestFilter):
         ]
 
 
-class LineItemClient(BaseRestFilter):
+class LineItemClient:
+    """Client for the `lineItems` GAM REST resource."""
+
     def __init__(
         self,
         network_code: str,
@@ -120,6 +130,7 @@ class LineItemClient(BaseRestFilter):
     ):
         self.network_code = network_code
         self.http_client = http_client
+        self._gam_obj_type = "lineItems"
 
     def list_line_items(
         self,
@@ -144,10 +155,16 @@ class LineItemClient(BaseRestFilter):
         web_property_code: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
         page_size: int = 1000,
     ):
-        gam_obj_type = "lineItems"
-        endpoint = gam_obj_path(self.network_code, gam_obj_type)
+        """List `lineItems`, paging through every result via `HTTPClient.fetch_all`.
 
-        line_item_id_str = gam_obj_id_path(line_item_id, self.network_code, gam_obj_type)
+        `line_item_id` resolves to `lineItems/{id}` path(s) and `order_id`
+        resolves to `orders/{id}` path(s) (both via `utils.gam_obj_id_path`)
+        before filtering — pass `order_id` to scope results to a specific
+        order's line items. Fields left as `None` are omitted from the filter.
+        """
+        endpoint = gam_obj_path(self.network_code, self._gam_obj_type)
+
+        line_item_id_str = gam_obj_id_path(line_item_id, self.network_code, self._gam_obj_type)
         order_id_str = gam_obj_id_path(order_id, self.network_code, "orders")
 
         filter_str = LineItemFilter(
@@ -174,9 +191,9 @@ class LineItemClient(BaseRestFilter):
 
         params = {"pageSize": page_size, "filter": filter_str}
 
-        return self.http_client.fetch_all(endpoint, gam_obj_type, params)
+        return self.http_client.fetch_all(endpoint, self._gam_obj_type, params)
 
     def get_line_item(self, line_item_id: int):
-        gam_obj_type = "lineItems"
-        endpoint = gam_obj_id_path(line_item_id, self.network_code, gam_obj_type)
+        """Fetch a single `lineItem` by numeric id."""
+        endpoint = gam_obj_id_path(line_item_id, self.network_code, self._gam_obj_type)
         return self.http_client.fetch(endpoint)

@@ -1,6 +1,3 @@
-from unittest.mock import Mock
-
-from pyadmanager.http_client import HTTPClient
 from pyadmanager.services.custom_targeting import (
     CustomTargetingClient,
     CustomTargetingKeyFilter,
@@ -8,10 +5,6 @@ from pyadmanager.services.custom_targeting import (
 )
 
 NETWORK_CODE = "123"
-
-
-def fake_http_client() -> Mock:
-    return Mock(spec=HTTPClient)
 
 
 class TestCustomTargetingKeyFilter:
@@ -57,8 +50,8 @@ class TestCustomTargetingValueFilter:
 
 
 class TestListKeys:
-    def test_builds_endpoint_and_filter(self):
-        http_client = fake_http_client()
+    def test_builds_endpoint_and_filter(self, fake_http_client):
+        http_client = fake_http_client
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
         client.list_keys(display_name="colors", status="ACTIVE")
@@ -72,8 +65,8 @@ class TestListKeys:
             },
         )
 
-    def test_key_id_is_resolved_to_full_path(self):
-        http_client = fake_http_client()
+    def test_key_id_is_resolved_to_full_path(self, fake_http_client):
+        http_client = fake_http_client
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
         client.list_keys(key_id=456)
@@ -81,8 +74,8 @@ class TestListKeys:
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/customTargetingKeys/456"'
 
-    def test_key_id_list_is_resolved_to_or_clause(self):
-        http_client = fake_http_client()
+    def test_key_id_list_is_resolved_to_or_clause(self, fake_http_client):
+        http_client = fake_http_client
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
         client.list_keys(key_id=[1, 2])
@@ -93,8 +86,8 @@ class TestListKeys:
             'OR name = "networks/123/customTargetingKeys/2")'
         )
 
-    def test_no_filters_passes_none(self):
-        http_client = fake_http_client()
+    def test_no_filters_passes_none(self, fake_http_client):
+        http_client = fake_http_client
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
         client.list_keys()
@@ -102,8 +95,8 @@ class TestListKeys:
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] is None
 
-    def test_returns_fetch_all_result(self):
-        http_client = fake_http_client()
+    def test_returns_fetch_all_result(self, fake_http_client):
+        http_client = fake_http_client
         http_client.fetch_all.return_value = [{"name": "k1"}]
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
@@ -111,8 +104,8 @@ class TestListKeys:
 
 
 class TestGetKey:
-    def test_fetches_by_id_path(self):
-        http_client = fake_http_client()
+    def test_fetches_by_id_path(self, fake_http_client):
+        http_client = fake_http_client
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
         client.get_key(456)
@@ -121,8 +114,8 @@ class TestGetKey:
 
 
 class TestListValues:
-    def test_resolves_both_value_and_key_id(self):
-        http_client = fake_http_client()
+    def test_resolves_both_value_and_key_id(self, fake_http_client):
+        http_client = fake_http_client
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
         client.list_values(value_id=1, custom_targeting_key_id=2)
@@ -141,8 +134,8 @@ class TestListValues:
 
 
 class TestGetValue:
-    def test_fetches_by_id_path(self):
-        http_client = fake_http_client()
+    def test_fetches_by_id_path(self, fake_http_client):
+        http_client = fake_http_client
         client = CustomTargetingClient(NETWORK_CODE, http_client)
 
         client.get_value(789)

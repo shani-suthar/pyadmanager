@@ -1,5 +1,7 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from pyadmanager.filters import BaseRestFilter, GAMRestFilters
 
 
@@ -127,3 +129,7 @@ class TestBaseRestFilter:
                 return ["", ""]
 
         assert FakeFilter().get_filter_string() is None
+
+    def test_build_filter_list_is_abstract(self):
+        with pytest.raises(NotImplementedError):
+            BaseRestFilter()._build_filter_list()

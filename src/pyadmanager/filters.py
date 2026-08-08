@@ -50,6 +50,15 @@ class GAMRestFilters:
         field: str,
         value: str | list[str] | None,
     ) -> str:
+        """Build an equality clause for `field` against one or more resource-path strings.
+
+        Used for id-based fields (e.g. `name`, `order`) where `value` is
+        already a full GAM resource path like `networks/123/lineItems/456`
+        (see `utils.gam_obj_id_path`), always double-quoted per the REST
+        filter grammar's string-quoting rule. A `list` becomes a
+        parenthesized `OR` clause; `None` means "no filter" and returns `""`
+        so `BaseRestFilter.get_filter_string` can drop it.
+        """
         if value is None:
             return ""
 
@@ -59,8 +68,6 @@ class GAMRestFilters:
         if isinstance(value, list):
             vals = " OR ".join([f'{field} = "{v}"' for v in value])
             return f"({vals})"
-
-        return ""
 
     @overload
     @staticmethod
@@ -80,6 +87,14 @@ class GAMRestFilters:
 
     @staticmethod
     def text_filter(field: str, value: str | list[str] | Text_Filter_Tuple | None) -> str:
+        """Build a text-comparison clause for `field` from a string, list, or filter-type tuple.
+
+        A plain `str` (or `list[str]`, joined as an `OR` clause) defaults to
+        an `EQUAL_TO` comparison. Pass a `(value, filter_type)` tuple to use
+        `CONTAINS`/`STARTWITH`/`ENDWITH` (rendered as `"*val*"`/`"val*"`/`"*val"`
+        wildcards) or `IS_NULL` (which ignores `value` and emits `field IS NULL`).
+        `None` means "no filter" and returns `""`.
+        """
         if value is None:
             return ""
 
@@ -102,6 +117,12 @@ class GAMRestFilters:
 
     @staticmethod
     def boolean_filter(field: str, value: bool | None) -> str:
+        """Build an equality clause for `field` against a bare (unquoted) boolean.
+
+        Booleans must be unquoted per the REST filter grammar (`archived = true`,
+        not `archived = "true"`), unlike string/id fields. `None` means "no
+        filter" and returns `""`.
+        """
         if value is None:
             return ""
 
@@ -125,6 +146,14 @@ class GAMRestFilters:
 
     @staticmethod
     def number_filter(field: str, value: float | list[int] | Number_Filter_Tuple | None) -> str:
+        """Build a numeric-comparison clause for `field` against a bare (unquoted) number.
+
+        A plain number (or `list[int]`, joined as an `OR` clause of equality
+        checks) defaults to `EQUAL_TO`. Pass a `(value, NUMBER_FILTER_TYPE)`
+        tuple for `!=`/`>=`/`<=`/`>`/`<` comparisons. Numbers are never
+        quoted, per the REST filter grammar. `None` means "no filter" and
+        returns `""`.
+        """
         if value is None:
             return ""
 
@@ -146,6 +175,14 @@ class GAMRestFilters:
 
     @staticmethod
     def id_filter(field: str, value: int | tuple[int, ID_FILTER_TYPE] | None) -> str:
+        """Build an equality/inequality clause for `field` against a bare (unquoted) integer id.
+
+        Unlike `id_based_filter` (which compares against a quoted resource
+        *path* string), this is for fields that are themselves numeric ids
+        compared directly, e.g. `EQUAL_TO`/`NOT_EQUAL_TO` via a
+        `(value, ID_FILTER_TYPE)` tuple. `None` means "no filter" and
+        returns `""`.
+        """
         if value is None:
             return ""
 
@@ -191,9 +228,21 @@ class BaseRestFilter:
     """Engine to combine multiple filter components into a final REST query string."""
 
     def _build_filter_list(self) -> list[str]:
+        """Return one clause string per field, in field order (subclasses must override).
+
+        Each element should come from a `GAMRestFilters.*_filter` call and be
+        `""` for a field that wasn't set — `get_filter_string` drops empty
+        clauses before `AND`-joining the rest.
+        """
         raise NotImplementedError("_build_filter_list is not implemented!!")
 
     def get_filter_string(self) -> str | None:
+        """Join `_build_filter_list()`'s non-empty clauses with `AND` into one filter string.
+
+        Returns `None` (rather than `""`) when every field was unset, so
+        callers can pass the result straight through as an optional
+        `filter` query param without an extra `if` check.
+        """
         # Filter out empty strings from optional filters
         clauses = [c for c in self._build_filter_list() if c]
         filter_str = " AND ".join(clauses)

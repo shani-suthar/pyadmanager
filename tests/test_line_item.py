@@ -1,14 +1,8 @@
 from datetime import UTC, datetime
-from unittest.mock import Mock
 
-from pyadmanager.http_client import HTTPClient
 from pyadmanager.services.line_item import LineItemClient, LineItemFilter
 
 NETWORK_CODE = "123"
-
-
-def fake_http_client() -> Mock:
-    return Mock(spec=HTTPClient)
 
 
 class TestLineItemFilter:
@@ -44,8 +38,8 @@ class TestLineItemFilter:
 
 
 class TestListLineItems:
-    def test_builds_endpoint_and_filter(self):
-        http_client = fake_http_client()
+    def test_builds_endpoint_and_filter(self, fake_http_client):
+        http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
         client.list_line_items(status="DRAFT", archived=True)
@@ -59,8 +53,8 @@ class TestListLineItems:
             },
         )
 
-    def test_line_item_id_is_resolved_to_full_path(self):
-        http_client = fake_http_client()
+    def test_line_item_id_is_resolved_to_full_path(self, fake_http_client):
+        http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
         client.list_line_items(line_item_id=456)
@@ -68,8 +62,8 @@ class TestListLineItems:
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/lineItems/456"'
 
-    def test_order_id_is_resolved_against_orders_resource(self):
-        http_client = fake_http_client()
+    def test_order_id_is_resolved_against_orders_resource(self, fake_http_client):
+        http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
         client.list_line_items(order_id=9)
@@ -77,8 +71,8 @@ class TestListLineItems:
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'order = "networks/123/orders/9"'
 
-    def test_no_filters_passes_none(self):
-        http_client = fake_http_client()
+    def test_no_filters_passes_none(self, fake_http_client):
+        http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
         client.list_line_items()
@@ -86,8 +80,8 @@ class TestListLineItems:
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] is None
 
-    def test_returns_fetch_all_result(self):
-        http_client = fake_http_client()
+    def test_returns_fetch_all_result(self, fake_http_client):
+        http_client = fake_http_client
         http_client.fetch_all.return_value = [{"name": "li1"}]
         client = LineItemClient(NETWORK_CODE, http_client)
 
@@ -95,8 +89,8 @@ class TestListLineItems:
 
 
 class TestGetLineItem:
-    def test_fetches_by_id_path(self):
-        http_client = fake_http_client()
+    def test_fetches_by_id_path(self, fake_http_client):
+        http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
         client.get_line_item(456)

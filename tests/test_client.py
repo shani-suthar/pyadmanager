@@ -4,7 +4,7 @@ from unittest.mock import Mock
 from google.oauth2 import service_account
 
 from pyadmanager.client import FULL_SCOPE, READONLY_SCOPE, GAMClient
-from pyadmanager.services import CustomTargetingClient, LineItemClient
+from pyadmanager.services import CustomTargetingClient, LineItemClient, ReportClient
 
 
 def fake_credentials() -> Mock:
@@ -117,3 +117,17 @@ class TestResourceClients:
         client = GAMClient(network_code=123, auth=fake_credentials())
 
         assert client.line_item is client.line_item
+
+    def test_report_is_wired_correctly(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        report = client.report
+
+        assert isinstance(report, ReportClient)
+        assert report.network_code == "123"
+        assert report.http_client is client.http_client
+
+    def test_report_is_cached(self):
+        client = GAMClient(network_code=123, auth=fake_credentials())
+
+        assert client.report is client.report

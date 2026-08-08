@@ -22,3 +22,12 @@ repos:
     rev: v1.1.411
     hooks:
     - id: pyright
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
