@@ -20,7 +20,7 @@ PrivateAuctionDealBuyerPermissionType = Literal["NEGOTIATOR_ONLY", "BIDDER"]
 class PrivateAuctionDealClient:
     """Client for the `privateAuctionDeals` GAM REST resource.
 
-    Read-only (`list_private_auction_deals`/`get_private_auction_deal`) —
+    Read-only (`list`/`get`) —
     the underlying API also documents `create`/`patch`, but those aren't
     implemented since no resource client in this library performs writes.
     """
@@ -34,7 +34,7 @@ class PrivateAuctionDealClient:
         self.http_client = http_client
         self._gam_obj_type = "privateAuctionDeals"
 
-    def list_private_auction_deals(
+    def list(
         self,
         private_auction_deal_id: int | list[int] | None = None,
         private_auction_id: int | list[int] | None = None,
@@ -91,7 +91,7 @@ class PrivateAuctionDealClient:
 
         return self.http_client.fetch_all(endpoint, self._gam_obj_type, params)
 
-    def get_private_auction_deal(self, private_auction_deal_id: int):
+    def get(self, private_auction_deal_id: int):
         """Fetch a single `privateAuctionDeal` by numeric id."""
         endpoint = gam_obj_id_path(private_auction_deal_id, self.network_code, self._gam_obj_type)
         return self.http_client.fetch(endpoint)

@@ -9,7 +9,7 @@ class TestListOrders:
     def test_builds_endpoint_and_filter(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(display_name="Q1 Campaign", status="APPROVED")
+        client.list(display_name="Q1 Campaign", status="APPROVED")
 
         fake_http_client.fetch_all.assert_called_once_with(
             "networks/123/orders",
@@ -23,7 +23,7 @@ class TestListOrders:
     def test_order_id_is_resolved_to_full_path(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(order_id=456)
+        client.list(order_id=456)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/orders/456"'
@@ -31,7 +31,7 @@ class TestListOrders:
     def test_advertiser_id_is_resolved_against_companies_resource(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(advertiser_id=9)
+        client.list(advertiser_id=9)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'advertiser = "networks/123/companies/9"'
@@ -39,7 +39,7 @@ class TestListOrders:
     def test_agency_id_is_resolved_against_companies_resource(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(agency_id=9)
+        client.list(agency_id=9)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'agency = "networks/123/companies/9"'
@@ -47,7 +47,7 @@ class TestListOrders:
     def test_trafficker_id_is_resolved_against_users_resource(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(trafficker_id=9)
+        client.list(trafficker_id=9)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'trafficker = "networks/123/users/9"'
@@ -55,7 +55,7 @@ class TestListOrders:
     def test_salesperson_id_is_resolved_against_users_resource(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(salesperson_id=9)
+        client.list(salesperson_id=9)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'salesperson = "networks/123/users/9"'
@@ -63,7 +63,7 @@ class TestListOrders:
     def test_display_name_and_currency_code_are_quoted(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(display_name="Q1 Campaign", currency_code="USD")
+        client.list(display_name="Q1 Campaign", currency_code="USD")
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'displayName = "Q1 Campaign" AND currencyCode = "USD"'
@@ -71,7 +71,7 @@ class TestListOrders:
     def test_start_time_is_quoted_rfc3339(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(start_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
+        client.list(start_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'startTime >= "2025-01-01T00:00:00+00:00"'
@@ -79,7 +79,7 @@ class TestListOrders:
     def test_programmatic_and_archived_are_bare_booleans(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(programmatic=True, archived=False)
+        client.list(programmatic=True, archived=False)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == "programmatic = true AND archived = false"
@@ -87,7 +87,7 @@ class TestListOrders:
     def test_external_order_id_and_po_number_are_quoted(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(external_order_id="ext-1", po_number="PO-1")
+        client.list(external_order_id="ext-1", po_number="PO-1")
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'externalOrderId = "ext-1" AND poNumber = "PO-1"'
@@ -95,7 +95,7 @@ class TestListOrders:
     def test_order_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(order_id=[1, 2])
+        client.list(order_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -105,7 +105,7 @@ class TestListOrders:
     def test_advertiser_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(advertiser_id=[1, 2])
+        client.list(advertiser_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -115,7 +115,7 @@ class TestListOrders:
     def test_trafficker_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(trafficker_id=[1, 2])
+        client.list(trafficker_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -125,7 +125,7 @@ class TestListOrders:
     def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(
+        client.list(
             order_id=456,
             display_name="Q1 Campaign",
             advertiser_id=1,
@@ -156,7 +156,7 @@ class TestListOrders:
     def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders(trafficker_id=9, status="APPROVED", archived=False)
+        client.list(trafficker_id=9, status="APPROVED", archived=False)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -166,7 +166,7 @@ class TestListOrders:
     def test_no_filters_passes_none(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.list_orders()
+        client.list()
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] is None
@@ -175,13 +175,13 @@ class TestListOrders:
         fake_http_client.fetch_all.return_value = [{"name": "o1"}]
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        assert client.list_orders() == [{"name": "o1"}]
+        assert client.list() == [{"name": "o1"}]
 
 
 class TestGetOrder:
     def test_fetches_by_id_path(self, fake_http_client):
         client = OrderClient(NETWORK_CODE, fake_http_client)
 
-        client.get_order(456)
+        client.get(456)
 
         fake_http_client.fetch.assert_called_once_with("networks/123/orders/456")

@@ -7,7 +7,7 @@ class TestListRoles:
     def test_builds_endpoint_and_filter(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.list_roles(display_name="Admin", status="ACTIVE")
+        client.list(display_name="Admin", status="ACTIVE")
 
         fake_http_client.fetch_all.assert_called_once_with(
             "networks/123/roles",
@@ -21,7 +21,7 @@ class TestListRoles:
     def test_role_id_is_resolved_to_full_path(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.list_roles(role_id=456)
+        client.list(role_id=456)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/roles/456"'
@@ -29,7 +29,7 @@ class TestListRoles:
     def test_role_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.list_roles(role_id=[1, 2])
+        client.list(role_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert (
@@ -39,7 +39,7 @@ class TestListRoles:
     def test_built_in_is_bare_boolean(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.list_roles(built_in=True)
+        client.list(built_in=True)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == "builtIn = true"
@@ -47,7 +47,7 @@ class TestListRoles:
     def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.list_roles(role_id=456, display_name="Admin", status="ACTIVE", built_in=True)
+        client.list(role_id=456, display_name="Admin", status="ACTIVE", built_in=True)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -58,7 +58,7 @@ class TestListRoles:
     def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.list_roles(display_name="Admin", built_in=True)
+        client.list(display_name="Admin", built_in=True)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'displayName = "Admin" AND builtIn = true'
@@ -66,7 +66,7 @@ class TestListRoles:
     def test_no_filters_passes_none(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.list_roles()
+        client.list()
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] is None
@@ -75,13 +75,13 @@ class TestListRoles:
         fake_http_client.fetch_all.return_value = [{"name": "r1"}]
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        assert client.list_roles() == [{"name": "r1"}]
+        assert client.list() == [{"name": "r1"}]
 
 
 class TestGetRole:
     def test_fetches_by_id_path(self, fake_http_client):
         client = RoleClient(NETWORK_CODE, fake_http_client)
 
-        client.get_role(456)
+        client.get(456)
 
         fake_http_client.fetch.assert_called_once_with("networks/123/roles/456")

@@ -21,9 +21,9 @@ For comparison, Google offers two official clients:
 `pyadmanager` wraps that REST API in a thin, typed client:
 
 - One `GAMClient` entry point, one resource client per GAM resource (`.line_item`, `.report`, `.order`, ...), each built lazily and cached.
-- Typed `list_*` filter keyword arguments per resource so your editor autocompletes valid filter fields and `Literal` enum values (e.g. `LineItemType`), and `pyright` catches typos before you hit the API.
+- Typed `list` filter keyword arguments per resource so your editor autocompletes valid filter fields and `Literal` enum values (e.g. `LineItemType`), and `pyright` catches typos before you hit the API.
 - Pagination, retries (with exponential backoff on 429/500/502/503/504), and GAM's filter-string quoting rules handled for you.
-- **Read-only today.** Every resource client currently only implements `list_*`/`get_*`, even for resources where the REST API supports writes. `create`/`update`/`delete` support is on the [roadmap](#roadmap) — if you need write access right now, this isn't yet the library for you.
+- **Read-only today.** Every resource client currently only implements `list`/`get`, even for resources where the REST API supports writes. `create`/`update`/`delete` support is on the [roadmap](#roadmap) — if you need write access right now, this isn't yet the library for you.
 
 It's aimed at ad-ops engineers and backend developers who need to read Ad Manager data (line items, orders, reports, inventory) into Python — for dashboards, ETL pipelines, or one-off scripts — without pulling in the full `googleads` SOAP stack.
 
@@ -31,7 +31,7 @@ It's aimed at ad-ops engineers and backend developers who need to read Ad Manage
 
 - **Typed, per-resource clients** — `line_item`, `order`, `placement`, `ad_unit`, `custom_targeting`, `role`, `user`, `network`, `private_auction`, `private_auction_deal`, `programmatic_buyer`, and `report`.
 - **Correct GAM filter-string building** — `GAMRestFilters` centralizes the quoting rules (quoted strings/dates, bare numbers/booleans) so you never hand-write a malformed `filter` query param.
-- **Automatic pagination** — `list_*` methods page through `nextPageToken` and return the fully collected list.
+- **Automatic pagination** — `list` methods page through `nextPageToken` and return the fully collected list.
 - **Built-in retry with backoff** — transient errors (429/500/502/503/504, connection/timeout errors) are retried automatically.
 - **Async report support** — `run_report()` kicks off a GAM report job and returns a `ReportJob` you can poll and pull rows from, optionally parsed straight into a `polars.DataFrame`.
 - **Cross-resource id resolution** — pass a bare `order_id`/`key_id`/`parent_ad_unit_id` int and it's resolved into the correct GAM resource path for you.
@@ -64,7 +64,7 @@ client = GAMClient.from_service_account_file(
 )
 
 # List every non-archived line item for a given order
-line_items = client.line_item.list_line_items(order_id=98765, archived=False)
+line_items = client.line_item.list(order_id=98765, archived=False)
 
 for item in line_items:
     print(item["displayName"], item["status"])
@@ -83,7 +83,7 @@ client = GAMClient.from_service_account_file(
 )
 
 # Fetch a single line item by numeric id
-line_item = client.line_item.get_line_item(line_item_id=112233)
+line_item = client.line_item.get(line_item_id=112233)
 print(line_item["name"], line_item["lineItemType"])
 
 # List active custom targeting keys
@@ -108,7 +108,7 @@ client = GAMClient.from_service_account_file(
 # Filter using a (value, filter_type) tuple to build CONTAINS/GT_EQ-style clauses
 one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
 
-delivering_line_items = client.line_item.list_line_items(
+delivering_line_items = client.line_item.list(
     display_name=("Q3", "CONTAINS"),  # displayName = "*Q3*"
     status=["DELIVERING", "READY"],  # (status = "DELIVERING" OR status = "READY")
     start_time=(one_week_ago, "GT_EQ"),  # startTime >= "2026-..."
@@ -137,19 +137,19 @@ else:
 | `GAMClient.from_service_account_file(network_code, filename, readonly=False, **kwargs)` | GAM network code, path to a service-account JSON key, optional `readonly` flag | `GAMClient` | Builds credentials from a key file on disk and returns a ready-to-use client. |
 | `GAMClient.from_service_account_info(network_code, info, readonly=False, **kwargs)` | GAM network code, service-account key as a `dict` | `GAMClient` | Same as above, for key material loaded from a secrets manager rather than a file. |
 | `GAMClient.<resource>` | — | resource client (e.g. `LineItemClient`) | Lazily built, cached per-resource client sharing the parent's network code and session. |
-| `<Resource>Client.list_<resource>(**filters, page_size=1000)` | typed filter kwargs per resource | `list[dict]` | Pages through every matching result via `nextPageToken`. |
-| `<Resource>Client.get_<resource>(id)` | numeric resource id | `dict` | Fetches a single resource by id. |
+| `<Resource>Client.list(**filters, page_size=1000)` | typed filter kwargs per resource | `list[dict]` | Pages through every matching result via `nextPageToken`. |
+| `<Resource>Client.get(id)` | numeric resource id | `dict` | Fetches a single resource by id. |
 | `ReportClient.run_report(report_id)` | numeric report id | `ReportJob` | Starts async generation of a saved report's rows. |
 | `ReportJob.wait_till_complete(sleep=2.5)` | poll interval (seconds) | `None` | Blocks until the report job is done; raises `ValueError` on job failure. |
 | `ReportJob.fetch_rows(sleep=2.5)` | poll interval (seconds) | `list[dict]` | Polls to completion if needed, then returns raw report result pages. |
 | `ReportJob.fetch_rows_as_dataframe(sleep=2.5)` | poll interval (seconds) | `polars.DataFrame` | Same as `fetch_rows`, parsed into a DataFrame (requires the `polars` extra). |
-| `GAMRestFilters.text_filter/number_filter/boolean_filter/date_filter/id_based_filter` | field name, value (or `(value, FILTER_TYPE)` tuple) | `str` | Low-level building blocks for GAM's filter-query grammar — used internally by every resource's `list_*` method. |
+| `GAMRestFilters.text_filter/number_filter/boolean_filter/date_filter/id_based_filter` | field name, value (or `(value, FILTER_TYPE)` tuple) | `str` | Low-level building blocks for GAM's filter-query grammar — used internally by every resource's `list` method. |
 
 ## Configuration & Customization
 
 - **Auth scope** — `from_service_account_file`/`from_service_account_info` default to the full `https://www.googleapis.com/auth/admanager` scope; pass `readonly=True` for `https://www.googleapis.com/auth/admanager.readonly`, or an explicit `scopes=[...]` kwarg to override either default.
 - **Extra credential kwargs** — any additional keyword arguments passed to the `from_service_account_*` constructors are forwarded directly to `google.oauth2.service_account.Credentials`.
-- **Page size** — every `list_*` method accepts `page_size` (default `1000`) to tune how many results are fetched per underlying HTTP request; pagination across pages happens automatically regardless of this value.
+- **Page size** — every `list` method accepts `page_size` (default `1000`) to tune how many results are fetched per underlying HTTP request; pagination across pages happens automatically regardless of this value.
 - **Report poll interval** — `ReportJob.wait_till_complete`/`fetch_rows`/`fetch_rows_as_dataframe` accept a `sleep` argument (default `2.5` seconds) controlling how often the async report job's status is polled.
 - **Logging** — the library logs via the standard `logging` module (`logging.getLogger("pyadmanager...")`); enable `DEBUG` logging to see outgoing request URLs/params and report-job poll iterations, or `INFO` for lifecycle events like credential loading and report job completion.
 

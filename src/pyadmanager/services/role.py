@@ -25,7 +25,7 @@ class RoleClient:
         self.http_client = http_client
         self._gam_obj_type = "roles"
 
-    def list_roles(
+    def list(
         self,
         role_id: int | list[int] | None = None,
         display_name: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
@@ -55,7 +55,7 @@ class RoleClient:
 
         return self.http_client.fetch_all(endpoint, self._gam_obj_type, params)
 
-    def get_role(self, role_id: int):
+    def get(self, role_id: int):
         """Fetch a single `role` by numeric id."""
         endpoint = gam_obj_id_path(role_id, self.network_code, self._gam_obj_type)
         return self.http_client.fetch(endpoint)

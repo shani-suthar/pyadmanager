@@ -17,7 +17,7 @@ AdUnitStatus = Literal["ACTIVE", "INACTIVE", "ARCHIVED"]
 class AdUnitClient:
     """Client for the `adUnits` GAM REST resource.
 
-    Read-only (`list_ad_units`/`get_ad_unit`) — the underlying API also
+    Read-only (`list`/`get`) — the underlying API also
     documents `create`, `patch`, and batch create/update/activate/
     deactivate/archive operations, but those aren't implemented since no
     resource client in this library performs writes.
@@ -32,7 +32,7 @@ class AdUnitClient:
         self.http_client = http_client
         self._gam_obj_type = "adUnits"
 
-    def list_ad_units(
+    def list(
         self,
         ad_unit_id: int | list[int] | None = None,
         display_name: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
@@ -75,7 +75,7 @@ class AdUnitClient:
 
         return self.http_client.fetch_all(endpoint, self._gam_obj_type, params)
 
-    def get_ad_unit(self, ad_unit_id: int):
+    def get(self, ad_unit_id: int):
         """Fetch a single `adUnit` by numeric id."""
         endpoint = gam_obj_id_path(ad_unit_id, self.network_code, self._gam_obj_type)
         return self.http_client.fetch(endpoint)

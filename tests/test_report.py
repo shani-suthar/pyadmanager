@@ -251,7 +251,7 @@ class TestListReports:
         http_client = fake_http_client
         client = ReportClient(NETWORK_CODE, http_client)
 
-        client.list_reports(display_name="test_report_123")
+        client.list(display_name="test_report_123")
 
         http_client.fetch_all.assert_called_once_with(
             "networks/123/reports",
@@ -263,7 +263,7 @@ class TestListReports:
         http_client = fake_http_client
         client = ReportClient(NETWORK_CODE, http_client)
 
-        client.list_reports(report_id=456)
+        client.list(report_id=456)
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/reports/456"'
@@ -272,7 +272,7 @@ class TestListReports:
         http_client = fake_http_client
         client = ReportClient(NETWORK_CODE, http_client)
 
-        client.list_reports(report_id=[1, 2])
+        client.list(report_id=[1, 2])
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -283,7 +283,7 @@ class TestListReports:
         http_client = fake_http_client
         client = ReportClient(NETWORK_CODE, http_client)
 
-        client.list_reports(report_id=456, display_name="test_report_123")
+        client.list(report_id=456, display_name="test_report_123")
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -294,7 +294,7 @@ class TestListReports:
         http_client = fake_http_client
         client = ReportClient(NETWORK_CODE, http_client)
 
-        client.list_reports()
+        client.list()
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] is None
@@ -304,7 +304,7 @@ class TestListReports:
         http_client.fetch_all.return_value = [{"name": "r1"}]
         client = ReportClient(NETWORK_CODE, http_client)
 
-        assert client.list_reports() == [{"name": "r1"}]
+        assert client.list() == [{"name": "r1"}]
 
 
 class TestGetReport:
@@ -312,7 +312,7 @@ class TestGetReport:
         http_client = fake_http_client
         client = ReportClient(NETWORK_CODE, http_client)
 
-        client.get_report(456)
+        client.get(456)
 
         http_client.fetch.assert_called_once_with("networks/123/reports/456")
 

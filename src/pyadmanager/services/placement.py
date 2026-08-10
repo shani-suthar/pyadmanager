@@ -17,7 +17,7 @@ PlacementStatus = Literal["PLACEMENT_STATUS_UNSPECIFIED", "ACTIVE", "INACTIVE", 
 class PlacementClient:
     """Client for the `placements` GAM REST resource.
 
-    Read-only (`list_placements`/`get_placement`), matching every other
+    Read-only (`list`/`get`), matching every other
     resource client here — the underlying API also documents `create`,
     `patch`, and batch activate/deactivate/archive operations, but those
     aren't implemented since no resource client in this library performs writes.
@@ -32,7 +32,7 @@ class PlacementClient:
         self.http_client = http_client
         self._gam_obj_type = "placements"
 
-    def list_placements(
+    def list(
         self,
         placement_id: int | list[int] | None = None,
         display_name: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
@@ -67,7 +67,7 @@ class PlacementClient:
 
         return self.http_client.fetch_all(endpoint, self._gam_obj_type, params)
 
-    def get_placement(self, placement_id: int):
+    def get(self, placement_id: int):
         """Fetch a single `placement` by numeric id."""
         endpoint = gam_obj_id_path(placement_id, self.network_code, self._gam_obj_type)
         return self.http_client.fetch(endpoint)

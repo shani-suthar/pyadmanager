@@ -9,7 +9,7 @@ class TestListPlacements:
     def test_builds_endpoint_and_filter(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements(display_name="Homepage", status="ACTIVE")
+        client.list(display_name="Homepage", status="ACTIVE")
 
         fake_http_client.fetch_all.assert_called_once_with(
             "networks/123/placements",
@@ -23,7 +23,7 @@ class TestListPlacements:
     def test_placement_id_is_resolved_to_full_path(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements(placement_id=456)
+        client.list(placement_id=456)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/placements/456"'
@@ -31,7 +31,7 @@ class TestListPlacements:
     def test_placement_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements(placement_id=[1, 2])
+        client.list(placement_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -41,7 +41,7 @@ class TestListPlacements:
     def test_placement_code_is_quoted(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements(placement_code="ABC123")
+        client.list(placement_code="ABC123")
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'placementCode = "ABC123"'
@@ -49,7 +49,7 @@ class TestListPlacements:
     def test_update_time_is_quoted_rfc3339(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements(update_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
+        client.list(update_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'updateTime >= "2025-01-01T00:00:00+00:00"'
@@ -57,7 +57,7 @@ class TestListPlacements:
     def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements(
+        client.list(
             placement_id=456,
             display_name="Homepage",
             description="Main page placement",
@@ -76,7 +76,7 @@ class TestListPlacements:
     def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements(description="Main page placement", status="ACTIVE")
+        client.list(description="Main page placement", status="ACTIVE")
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == ('description = "Main page placement" AND status = "ACTIVE"')
@@ -84,7 +84,7 @@ class TestListPlacements:
     def test_no_filters_passes_none(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.list_placements()
+        client.list()
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] is None
@@ -93,13 +93,13 @@ class TestListPlacements:
         fake_http_client.fetch_all.return_value = [{"name": "p1"}]
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        assert client.list_placements() == [{"name": "p1"}]
+        assert client.list() == [{"name": "p1"}]
 
 
 class TestGetPlacement:
     def test_fetches_by_id_path(self, fake_http_client):
         client = PlacementClient(NETWORK_CODE, fake_http_client)
 
-        client.get_placement(456)
+        client.get(456)
 
         fake_http_client.fetch.assert_called_once_with("networks/123/placements/456")

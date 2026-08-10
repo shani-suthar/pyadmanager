@@ -10,7 +10,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(status="DRAFT", archived=True)
+        client.list(status="DRAFT", archived=True)
 
         http_client.fetch_all.assert_called_once_with(
             "networks/123/lineItems",
@@ -25,7 +25,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(line_item_id=456)
+        client.list(line_item_id=456)
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/lineItems/456"'
@@ -34,7 +34,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(order_id=9)
+        client.list(order_id=9)
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'order = "networks/123/orders/9"'
@@ -43,7 +43,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(line_item_id=[1, 2])
+        client.list(line_item_id=[1, 2])
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -54,7 +54,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(order_id=[1, 2])
+        client.list(order_id=[1, 2])
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -65,7 +65,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(
+        client.list(
             line_item_id=100,
             display_name="Homepage",
             order_id=9,
@@ -105,7 +105,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(order_id=9, cost_type="CPM", missing_creatives=True)
+        client.list(order_id=9, cost_type="CPM", missing_creatives=True)
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -116,7 +116,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(priority=[1, 2])
+        client.list(priority=[1, 2])
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == "(priority = 1 OR priority = 2)"
@@ -125,7 +125,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(archived=True, missing_creatives=False)
+        client.list(archived=True, missing_creatives=False)
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == "archived = true AND missingCreatives = false"
@@ -134,7 +134,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(display_name=("Q3", "CONTAINS"))
+        client.list(display_name=("Q3", "CONTAINS"))
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'displayName = "*Q3*"'
@@ -143,7 +143,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(display_name=("Q3", "STARTWITH"))
+        client.list(display_name=("Q3", "STARTWITH"))
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'displayName = "Q3*"'
@@ -152,7 +152,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(display_name=("Q3", "ENDWITH"))
+        client.list(display_name=("Q3", "ENDWITH"))
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'displayName = "*Q3"'
@@ -161,7 +161,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(status="DRAFT", cost_type="CPM")
+        client.list(status="DRAFT", cost_type="CPM")
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'status = "DRAFT" AND costType = "CPM"'
@@ -170,7 +170,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items(update_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
+        client.list(update_time=(datetime(2025, 1, 1, tzinfo=UTC), "GT_EQ"))
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] == 'updateTime >= "2025-01-01T00:00:00+00:00"'
@@ -179,7 +179,7 @@ class TestListLineItems:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.list_line_items()
+        client.list()
 
         _, _, params = http_client.fetch_all.call_args[0]
         assert params["filter"] is None
@@ -189,7 +189,7 @@ class TestListLineItems:
         http_client.fetch_all.return_value = [{"name": "li1"}]
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        assert client.list_line_items() == [{"name": "li1"}]
+        assert client.list() == [{"name": "li1"}]
 
 
 class TestGetLineItem:
@@ -197,6 +197,6 @@ class TestGetLineItem:
         http_client = fake_http_client
         client = LineItemClient(NETWORK_CODE, http_client)
 
-        client.get_line_item(456)
+        client.get(456)
 
         http_client.fetch.assert_called_once_with("networks/123/lineItems/456")

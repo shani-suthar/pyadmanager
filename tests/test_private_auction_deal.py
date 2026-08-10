@@ -9,7 +9,7 @@ class TestListPrivateAuctionDeals:
     def test_builds_endpoint_and_filter(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(status="ACTIVE", block_override_enabled=True)
+        client.list(status="ACTIVE", block_override_enabled=True)
 
         fake_http_client.fetch_all.assert_called_once_with(
             "networks/123/privateAuctionDeals",
@@ -23,7 +23,7 @@ class TestListPrivateAuctionDeals:
     def test_private_auction_deal_id_is_resolved_to_full_path(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(private_auction_deal_id=456)
+        client.list(private_auction_deal_id=456)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'name = "networks/123/privateAuctionDeals/456"'
@@ -33,7 +33,7 @@ class TestListPrivateAuctionDeals:
     ):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(private_auction_id=1)
+        client.list(private_auction_id=1)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'privateAuctionId = "networks/123/privateAuctions/1"'
@@ -43,7 +43,7 @@ class TestListPrivateAuctionDeals:
     ):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(buyer_account_id=2)
+        client.list(buyer_account_id=2)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'buyerAccountId = "networks/123/programmaticBuyers/2"'
@@ -51,9 +51,7 @@ class TestListPrivateAuctionDeals:
     def test_external_deal_id_status_and_buyer_permission_type_are_quoted(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(
-            external_deal_id="ext-1", status="ACTIVE", buyer_permission_type="BIDDER"
-        )
+        client.list(external_deal_id="ext-1", status="ACTIVE", buyer_permission_type="BIDDER")
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -63,9 +61,7 @@ class TestListPrivateAuctionDeals:
     def test_boolean_fields_are_bare(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(
-            auction_priority_enabled=True, block_override_enabled=False
-        )
+        client.list(auction_priority_enabled=True, block_override_enabled=False)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == "auctionPriorityEnabled = true AND blockOverrideEnabled = false"
@@ -73,7 +69,7 @@ class TestListPrivateAuctionDeals:
     def test_end_time_is_quoted_rfc3339(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(end_time=(datetime(2025, 1, 1, tzinfo=UTC), "LT_EQ"))
+        client.list(end_time=(datetime(2025, 1, 1, tzinfo=UTC), "LT_EQ"))
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == 'endTime <= "2025-01-01T00:00:00+00:00"'
@@ -81,7 +77,7 @@ class TestListPrivateAuctionDeals:
     def test_private_auction_deal_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(private_auction_deal_id=[1, 2])
+        client.list(private_auction_deal_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -92,7 +88,7 @@ class TestListPrivateAuctionDeals:
     def test_private_auction_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(private_auction_id=[1, 2])
+        client.list(private_auction_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -103,7 +99,7 @@ class TestListPrivateAuctionDeals:
     def test_buyer_account_id_list_is_resolved_to_or_clause(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(buyer_account_id=[1, 2])
+        client.list(buyer_account_id=[1, 2])
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -114,7 +110,7 @@ class TestListPrivateAuctionDeals:
     def test_all_fields_produce_expected_filter_str_in_order(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(
+        client.list(
             private_auction_deal_id=456,
             private_auction_id=1,
             buyer_account_id=2,
@@ -143,9 +139,7 @@ class TestListPrivateAuctionDeals:
     def test_partial_fields_are_joined_in_field_order_skipping_unset(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals(
-            buyer_permission_type="BIDDER", auction_priority_enabled=True
-        )
+        client.list(buyer_permission_type="BIDDER", auction_priority_enabled=True)
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] == (
@@ -155,7 +149,7 @@ class TestListPrivateAuctionDeals:
     def test_no_filters_passes_none(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.list_private_auction_deals()
+        client.list()
 
         _, _, params = fake_http_client.fetch_all.call_args[0]
         assert params["filter"] is None
@@ -164,13 +158,13 @@ class TestListPrivateAuctionDeals:
         fake_http_client.fetch_all.return_value = [{"name": "d1"}]
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        assert client.list_private_auction_deals() == [{"name": "d1"}]
+        assert client.list() == [{"name": "d1"}]
 
 
 class TestGetPrivateAuctionDeal:
     def test_fetches_by_id_path(self, fake_http_client):
         client = PrivateAuctionDealClient(NETWORK_CODE, fake_http_client)
 
-        client.get_private_auction_deal(456)
+        client.get(456)
 
         fake_http_client.fetch.assert_called_once_with("networks/123/privateAuctionDeals/456")

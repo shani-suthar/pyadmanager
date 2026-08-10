@@ -46,7 +46,7 @@ def parse_report_rows(
     """Parse `ReportJob.fetch_rows()` pages into a single polars DataFrame.
 
     `dimensions`/`metrics` are the same-order lists from the report's
-    `reportDefinition` (see `ReportClient.get_report`) — each row's
+    `reportDefinition` (see `ReportClient.get`) — each row's
     `dimensionValues`/`metricValueGroups[0].primaryValues` line up with them
     positionally. Assumes a single metric value group per row (no comparison
     date range).
@@ -184,7 +184,7 @@ class ReportJob:
 class ReportClient:
     """Client for the `reports` GAM REST resource.
 
-    `list_reports`/`get_report` read saved report definitions;
+    `list`/`get` read saved report definitions;
     `run_report` kicks off asynchronous generation of a report's rows and
     returns a `ReportJob` to poll/fetch them.
     """
@@ -198,7 +198,7 @@ class ReportClient:
         self.http_client = http_client
         self._gam_obj_type = "reports"
 
-    def list_reports(
+    def list(
         self,
         report_id: int | list[int] | None = None,
         display_name: str | list[str] | GAMRestFilters.Text_Filter_Tuple | None = None,
@@ -225,7 +225,7 @@ class ReportClient:
 
         return self.http_client.fetch_all(endpoint, self._gam_obj_type, params)
 
-    def get_report(self, report_id: int):
+    def get(self, report_id: int):
         """Fetch a single `report`'s definition (including its `reportDefinition`) by numeric id."""
         endpoint = gam_obj_id_path(report_id, self.network_code, self._gam_obj_type)
         return self.http_client.fetch(endpoint)
