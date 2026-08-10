@@ -1,6 +1,6 @@
 [project]
 name = "pyadmanager"
-version = "0.1.0"
+version = "0.1.1"
 description = "A simple, modern Python REST API client for Google Ad Manager."
 readme = "README.md"
 authors = [
