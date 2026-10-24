@@ -33,7 +33,7 @@ Repository = "https://github.com/shani-suthar/pyadmanager"
 Issues = "https://github.com/shani-suthar/pyadmanager/issues"
 
 [build-system]
-requires = ["uv_build>=0.12.2,<0.13.0"]
+requires = ["uv_build>=0.12.2,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.ruff]
